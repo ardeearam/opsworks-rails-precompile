@@ -47,6 +47,7 @@ node[:deploy].each do |application, deploy|
   execute "move_precompiled_assets" do
     cwd current_path
     user deploy[:user]
+    group deploy[:group] 
     command "mv #{current_assets_path} #{shared_assets_path}"
   end
 
