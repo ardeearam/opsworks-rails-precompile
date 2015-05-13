@@ -38,6 +38,7 @@ node[:deploy].each do |application, deploy|
   execute 'rake assets:precompile' do
     cwd current_path
     user deploy[:user]
+    group deploy[:group]    
     command 'bundle exec rake assets:precompile'
     environment 'RAILS_ENV' => rails_env
   end
