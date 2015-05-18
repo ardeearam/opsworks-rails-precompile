@@ -42,6 +42,11 @@ node[:deploy].each do |application, deploy|
     only_if {File.exists?(current_assets_path)}
   end
   
+  link "#{current_assets_path}" do
+    action :delete
+    only_if {File.exists?(current_assets_path)}
+  end  
+  
 
   Chef::Log.info("Precompiling Rails assets with environment #{rails_env}")
 
