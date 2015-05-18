@@ -6,6 +6,7 @@ module PrecompileHelper
     
     begin
       old_md5sum = ::File.read(md5_file).chomp
+      does_md5sum_exist = true
     rescue Errno::ENOENT
       #If the md5 file does not exist yet, assume precompile has not yet taken place, and
       #we force precompilation
