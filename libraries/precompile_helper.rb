@@ -5,7 +5,7 @@ module PrecompileHelper
     user = params[:user]
     
     begin
-      old_md5sum = ::File.read(md5_file)
+      old_md5sum = ::File.read(md5_file).chomp
     rescue Errno::ENOENT
       #If the md5 file does not exist yet, assume precompile has not yet taken place, and
       #we force precompilation
@@ -18,7 +18,7 @@ module PrecompileHelper
     shell = %Q(find #{directory_path} -type f -exec md5sum {} + | awk '{print $1}' | sort | md5sum)
     cmd = Mixlib::ShellOut.new(shell, :user => user)
     cmd.run_command
-    new_md5sum = cmd.stdout
+    new_md5sum = cmd.stdout.chomp
     Chef::Log.info("Old MD5: #{old_md5sum}") if !old_md5sum.nil?
     Chef::Log.info("New MD5: #{new_md5sum}")
     
