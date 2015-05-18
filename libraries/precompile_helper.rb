@@ -19,6 +19,8 @@ module PrecompileHelper
     cmd = Mixlib::ShellOut.new(shell, :user => user)
     cmd.run_command
     new_md5sum = cmd.stdout
+    Chef::Log.info("Old MD5: #{old_md5sum}") if !old_md5sum.nil?
+    Chef::Log.info("New MD5: #{new_md5sum}")
     
     directory_changed = (old_md5sum != new_md5sum)
     
@@ -26,7 +28,13 @@ module PrecompileHelper
       ::File.open(md5_file, "w") do |f|
         f.write new_md5sum.chomp
       end
+      
+      Chef::Log.info("Directory changed! Let's do this!")
+    else
+      
+      Chef::Log.info("Directory did not change! Cowardly exiting...")
     end
+  
 
     
     !does_md5sum_exist || directory_changed 

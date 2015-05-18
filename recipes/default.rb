@@ -10,45 +10,48 @@ node[:deploy].each do |application, deploy|
   current_assets_path = "#{current_path}/public/assets"
   shared_assets_path = "#{deploy[:deploy_to]}/shared/assets"
   
-  source_assets = "#{current_path}/app/assets"
-  precompile_hash = "#{deploy[:deploy_to]}/shared/config/precompile.md5"
+  ruby_block do 
+    block do
+      source_assets = "#{current_path}/app/assets"
+      precompile_hash = "#{deploy[:deploy_to]}/shared/config/precompile.md5"
+      node.set[:run_time][:directory_changed] = PrecompileHelper.directory_changed?({
+        directory_path: source_assets,
+        md5_file: precompile_hash,
+        user: deploy[:user]
+      })
+    end
+  end
   
-  #Ignore precompile if the source assets did not change
-  next if !PrecompileHelper.directory_changed?({
-    directory_path: source_assets,
-    md5_file: precompile_hash,
-    user: deploy[:user]
-  })
-  
-  
-  
-  #Cleanup first
-  Chef::Log.info("Deleting shared assets path: #{shared_assets_path}")
-  directory "#{shared_assets_path}" do
+
+  directory "#{shared_assets_path}" do    
     action :delete
     recursive true
-    only_if {Dir.exists?(shared_assets_path)}
+    ignore_failure true
+    only_if {node.set[:run_time][:directory_changed]}
   end
   
   
-  Chef::Log.info("Removing current assets path, if it exists : #{current_assets_path}")
+  #Chef::Log.info("Removing current assets path, if it exists : #{current_assets_path}")
   directory "#{current_assets_path}" do
     action :delete
-    only_if {Dir.exists?(current_assets_path)}
+    ignore_failure true
+    only_if {node.set[:run_time][:directory_changed]}
   end
   
   file "#{current_assets_path}" do
     action :delete
-    only_if {File.exists?(current_assets_path)}
+    ignore_failure true
+    only_if {node.set[:run_time][:directory_changed]}
   end
   
   link "#{current_assets_path}" do
     action :delete
-    only_if {File.exists?(current_assets_path)}
+    ignore_failure true
+    only_if {node.set[:run_time][:directory_changed]}
   end  
   
 
-  Chef::Log.info("Precompiling Rails assets with environment #{rails_env}")
+  #Chef::Log.info("Precompiling Rails assets with environment #{rails_env}")
 
   # public/assets folder should not exist for the rake task to execute properly
   execute 'rake assets:precompile' do
@@ -57,21 +60,24 @@ node[:deploy].each do |application, deploy|
     group deploy[:group]    
     command 'bundle exec rake assets:precompile'
     environment 'RAILS_ENV' => rails_env
+    only_if {node.set[:run_time][:directory_changed]}
   end
   
-  Chef::Log.info("Moving precompiled assets to #{shared_assets_path}")
+  #Chef::Log.info("Moving precompiled assets to #{shared_assets_path}")
   execute "move_precompiled_assets" do
     cwd current_path
     user deploy[:user]
     group deploy[:group] 
     command "mv #{current_assets_path} #{shared_assets_path}"
+    only_if {node.set[:run_time][:directory_changed]}
   end
 
-  Chef::Log.info("Creating link from #{current_assets_path} to #{shared_assets_path}")
+  #Chef::Log.info("Creating link from #{current_assets_path} to #{shared_assets_path}")
   link "#{current_assets_path}" do
     owner deploy[:user]
     group deploy[:group]
     to "#{shared_assets_path}"
+    only_if {node.set[:run_time][:directory_changed]}
   end  
   
   
