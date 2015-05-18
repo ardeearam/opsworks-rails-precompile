@@ -10,7 +10,7 @@ node[:deploy].each do |application, deploy|
   current_assets_path = "#{current_path}/public/assets"
   shared_assets_path = "#{deploy[:deploy_to]}/shared/assets"
   
-  ruby_block do 
+  ruby_block "check_if_app_assets_changed" do 
     block do
       source_assets = "#{current_path}/app/assets"
       precompile_hash = "#{deploy[:deploy_to]}/shared/config/precompile.md5"
